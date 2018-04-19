@@ -3,6 +3,7 @@ import csv
 import importlib
 
 import astar
+import iddfs
 
 
 # Grab the user arguments
@@ -31,11 +32,11 @@ with open(goalStateFileName) as csvDataFile:
     csvDataFile.close()
 
 
-
+# Output an file with the name of the 4th user argument.
 outPutText1 = "Here is output line 1\n"
 outPutText2 = "Here is output line 2\n"
 
-writeFile = open("output.txt","w+")
+writeFile = open(outputFileName + ".txt", "w+")
 writeFile.write(outPutText1)
 writeFile.write(outPutText2)
 writeFile.close()
