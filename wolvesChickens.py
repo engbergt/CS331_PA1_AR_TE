@@ -31,6 +31,28 @@ with open(goalStateFileName) as csvDataFile:
     goalRightBank = next(csvReader)
     csvDataFile.close()
 
+# Define the Node class
+class Node:
+	def __init__(): #constructor
+		self.nodeID = nodeID
+		self.nodeType = nodeType
+		self.parentNodeId = parentNodeId
+		self.leftBankList = []
+		self.rightBankList = []
+		self.childrenIDsList = []
+
+# Make the inital node from the users files.
+
+initalNode = Node()
+
+
+
+# example stuffss 
+# lilnode = Node(3,"c1", 0)
+# lilnode.leftBankList.append(2)
+# lilnode.leftBankList.append(7)
+# print(lilnode.leftBankList[1])
+
 
 # Output an file with the name of the 4th user argument.
 outPutText1 = "Here is output line 1\n"
