@@ -1,15 +1,15 @@
 import sys
 import csv
+import importlib
+
+import astar
+
 
 # Grab the user arguments
-initialStateFileName = sys.argv[1]
-goalStateFileName = sys.argv[2]
+initialStateFileName = "tests/" + sys.argv[1]
+goalStateFileName = "tests/" + sys.argv[2]
 modeRequested = sys.argv[3]
 outputFileName = sys.argv[4]
-
-# Grab the referenced files
-initialStateFile = open(initialStateFileName)
-goalStateFile = open(goalStateFileName)
 
 # Initialize arrays for the file info to be placed for easy access.
 initalLeftBank = []
@@ -31,5 +31,11 @@ with open(goalStateFileName) as csvDataFile:
     csvDataFile.close()
 
 
-# Read the file contents into arrays for easy access
-# reader = csv.reader(initialStateFile, delimiter=',')
+
+outPutText1 = "Here is output line 1\n"
+outPutText2 = "Here is output line 2\n"
+
+writeFile = open("output.txt","w+")
+writeFile.write(outPutText1)
+writeFile.write(outPutText2)
+writeFile.close()
