@@ -35,7 +35,7 @@ with open(goalStateFileName) as csvDataFile:
 
 # Define the Node class
 class Node:
-	def __init__(): #constructor
+	def __init__(self, nodeID, nodeType, parentNodeId): #constructor
 		self.nodeID = nodeID
 		self.nodeType = nodeType
 		self.parentNodeId = parentNodeId
@@ -44,16 +44,27 @@ class Node:
 		self.childrenIDsList = []
 
 
-# Make the inital node from the users files.
+# Make the inital node from the users files data.
+initialNode = Node(0, 'initial', -1)
 
-initialNode = Node()
+initialNode.leftBankList = list(initalLeftBank)
+initialNode.rightBankList = list(initialRightBank)
 
-initialNode.nodeID = 0
-initialNode.nodeType = 'initial'
-initialNode.parentNodeID = -1
-initialNode.leftBankList = copy.deepcopy(initalLeftBank)
-initialNode.rightBankList = copy.deepcopy(initialRightBank)
 
+# Make the goal node from the users files data.
+goalNode = Node(-1, 'goal', -2)
+
+goalNode.leftBankList = list(goalLeftBank)
+goalNode.rightBankList = list(goalRightBank)
+
+
+print(initialNode.nodeType)
+print(initialNode.leftBankList[0])
+print(initialNode.rightBankList[0])
+
+print(goalNode.nodeType)
+print(goalNode.leftBankList[0])
+print(goalNode.rightBankList[0])
 
 # example stuffss 
 # lilnode = Node(3,"c1", 0)
@@ -62,7 +73,7 @@ initialNode.rightBankList = copy.deepcopy(initialRightBank)
 # print(lilnode.leftBankList[1])
 
 
-# Output an file with the name of the 4th user argument.
+# Output a file with the name of the 4th user argument.
 outPutText1 = "Here is output line 1\n"
 outPutText2 = "Here is output line 2\n"
 
