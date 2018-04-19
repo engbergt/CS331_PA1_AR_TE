@@ -12,6 +12,7 @@ goalStateFileName = "tests/" + sys.argv[2]
 modeRequested = sys.argv[3]
 outputFileName = sys.argv[4]
 
+
 # Initialize arrays for the file info to be placed for easy access.
 initalLeftBank = []
 initialRightBank = []
@@ -31,6 +32,7 @@ with open(goalStateFileName) as csvDataFile:
     goalRightBank = next(csvReader)
     csvDataFile.close()
 
+
 # Define the Node class
 class Node:
 	def __init__(): #constructor
@@ -41,10 +43,16 @@ class Node:
 		self.rightBankList = []
 		self.childrenIDsList = []
 
+
 # Make the inital node from the users files.
 
-initalNode = Node()
+initialNode = Node()
 
+initialNode.nodeID = 0
+initialNode.nodeType = 'initial'
+initialNode.parentNodeID = -1
+initialNode.leftBankList = copy.deepcopy(initalLeftBank)
+initialNode.rightBankList = copy.deepcopy(initialRightBank)
 
 
 # example stuffss 
