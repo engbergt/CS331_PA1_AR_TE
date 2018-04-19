@@ -14,6 +14,17 @@ import Queue
 import os.path
 import operator
 
+
+# Define the Node class
+class Node:
+	def __init__(self, nodeID, nodeType, parentNodeId): #constructor
+		self.nodeID = nodeID
+		self.nodeType = nodeType
+		self.parentNodeId = parentNodeId
+		self.leftBankList = []
+		self.rightBankList = []
+		self.childrenIDsList = []
+
 #IE InitializeFrontier
 #read in the input from the command line
 def getInput():
@@ -21,7 +32,7 @@ def getInput():
 	global leftBankInitial, rightBankInitial
 	global expandedNodesCount, stateHistory
 
-	expandedNodesCount = 0
+	expandedNodesCount = 1
 	stateHistory = []
 	stateHistory.Append([leftBankInitial, rightBankInitial])
 
@@ -74,6 +85,8 @@ def getInput():
 	initialState.close()
 	goalState.close()
 
+	#initialNode = Node(0, 'initial', -1)
+
 	#verify we have correct modes
 	if (str(mode) == "bfs" or
 	    str(mode) == "dfs" or
@@ -83,6 +96,8 @@ def getInput():
 	else:
 		print str(mode), 'is not an acceptable mode. Please use bfs, dfs, iddfs, or astar. Exiting.'
 		exit()
+
+
 
 #do one of five actions 
 #    Put one chicken in the boat
@@ -273,11 +288,30 @@ def action(mode, leftState, rightState):
 
 	return
 
+#write the result to output
+def writeToOutput(solutionFound, solutionStates):
+	if(".txt" in outputFile):
+		writeFile = open(outputFile, "w+")
+	else:
+		writeFile = open(outputFile + ".txt", "w+")
+	
+	if(solutionFound == False):
+		print noSolution
+		writeFile.write(noSolution + "\n");
+	else:
+		writeFile.write("Solution States: \n" + solutionStates)
+
+	writeFile				
+
+
+
+
 #Breadth-First Search
 #FIFO Queue
 #Expand all nodes @ a given depth before any nodes at the next level are expanded
 def bfs():
 	global fifo
+	
 	solutionFound = False
 
 	fifo = Queue()
@@ -286,15 +320,15 @@ def bfs():
 	#verify that this is putting these in as a pair
 	while(solutionFound is False):
 		if(fifo.Empty):
-			print noSolution
-			#TODO write to output file w/ noSolution	
-			exit()
+			writeToOutput(False,)
 		nodeToExpand = fifo.get()
 
 
 		#check if this node is the goal state. if not. continue
 		#else print it
 		if():
+
+			writeToOutput(True,)
 		else:
 			stateHistory.Append(nodeToExpand) #add to history
 #Depth-First Search
