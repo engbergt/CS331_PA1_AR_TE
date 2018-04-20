@@ -30,6 +30,14 @@ def CopyState(state):
 
 	return copiedState
 
+#take the parent id of a node, and find it in the node list
+#return that parent node
+def getParentNode(parentId):
+	global nodeList
+	for node in nodeList:
+		if(node.nodeID == parentId):
+			return node
+
 #write the result to output
 #if solutionStates is None, then write no solution
 #otherwise use what you're given with solutionStates
@@ -42,11 +50,15 @@ def writeToOutput(solutionStates):
 	
 	if(solutionStates == None):
 		print "No solution found.\n"
-		writeFile.write("No solution found.\n")
+		writeFile.write("No solution found.\r\n")
 	else:
-		writeFile.write("Solution Found \n")
-		writeFile.write("Solution States: \n" + solutionStates + "\n")
-		writeFile.write("Number of nodes expanded: " + expandedNodesCount + "\n")				
+		print "solution found"
+		writeFile.write("Solution States \r\n")
+		for state in solutionStates:
+			writeFile.write("%s\n" %state)
+			print state
+
+		writeFile.write("Number of nodes expanded: %d\r\n" % expandedNodesCount)				
 	writeFile.close()
 	exit()
 
@@ -59,18 +71,25 @@ def solution(nodeSolution):
 	parent = nodeSolution.parentNode
 
 	#go until we've added the root node
-	while(not(parent == None)):
+	while(not(parentID == -1)):
 		#find the next node in our list based on our parent
 
-		nextNode = nodeList.pop(parent)
+		nextNode = getParentNode(parentID)
 		
 		#add that node to our results
 		results.append(nextNode.state)
 		#set our new parent node
-		parent = nextNode.parentNode
+		parentID = nextNode.parentID
+	
+
+	print "this is the final solution item"
+	print results
+	print "now in correct order"
+	print list(reversed((results)))
+	
 
 	#return our list in reverse so the first item is our root
-	return results.reverse()
+	return list(reversed((results)))
 
 #IE InitializeFrontier
 #read in the input from the command line
@@ -152,8 +171,9 @@ def getInput():
 	goalBankStates = [leftBankGoal, rightBankGoal]
 	initialBankState = [leftBankInitial, rightBankInitial]
 
-	initialNode = Node(currentNodeIndex, initialBankState, None)
+	initialNode = Node(currentNodeIndex, initialBankState, -1)
 	nodeList.append(initialNode)
+	stateHistory.append(initialNode.state)
 
 	currentNodeIndex += 1
 
@@ -191,8 +211,12 @@ def headingLeft(rightState):
 def actionOneChicken(expandingNode):
 	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	leftStateResult = leftState = CopyState(expandingNode.state[0])
-	rightStateResult = rightState = CopyState(expandingNode.state[1])
+	print "one chicken"
+
+	leftStateResult = CopyState(expandingNode.state[0])
+	leftState = CopyState(expandingNode.state[0])
+	rightStateResult = CopyState(expandingNode.state[1])
+	rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
@@ -237,11 +261,21 @@ def actionOneChicken(expandingNode):
 			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
-	
-	newNode = Node(currentNodeIndex, state, expandingNode)
-	currentNodeIndex += 1
 
-	return newNode
+	#if we'e already evaluated, short circuit
+	if(isInStateHistory(state)):
+		
+		print "I had that state. Not going to add"
+	
+		return None
+	else:
+		
+		print "I did not have that state. Going to add"
+		
+		newNode = Node(currentNodeIndex, state, expandingNode.nodeID)
+		currentNodeIndex += 1
+		
+		return newNode
 
 #Takes in a Node. 
 #Determines if the action is an appropriate one.
@@ -252,8 +286,10 @@ def actionOneChicken(expandingNode):
 def actionTwoChicken(expandingNode):
 	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	leftStateResult = leftState = CopyState(expandingNode.state[0])
-	rightStateResult = rightState = CopyState(expandingNode.state[1])
+	leftStateResult = CopyState(expandingNode.state[0])
+	leftState = CopyState(expandingNode.state[0])
+	rightStateResult = CopyState(expandingNode.state[1])
+	rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
@@ -296,10 +332,16 @@ def actionTwoChicken(expandingNode):
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, state, expandingNode)
-	currentNodeIndex += 1
-	
-	return newNode
+	#if we'e already evaluated, short circuit
+	if(isInStateHistory(state)):
+		print "I had that state. Not going to add"
+		return None
+	else:
+		print "I did not have that state. Going to add"
+		newNode = Node(currentNodeIndex, state, expandingNode.nodeID)
+		currentNodeIndex += 1
+		
+		return newNode
 
 #Takes in a Node. 
 #Determines if the action is an appropriate one.
@@ -309,8 +351,10 @@ def actionTwoChicken(expandingNode):
 def actionOneWolf(expandingNode):
 	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	leftStateResult = leftState = CopyState(expandingNode.state[0])
-	rightStateResult = rightState = CopyState(expandingNode.state[1])
+	leftStateResult = CopyState(expandingNode.state[0])
+	leftState = CopyState(expandingNode.state[0])
+	rightStateResult = CopyState(expandingNode.state[1])
+	rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
@@ -351,10 +395,14 @@ def actionOneWolf(expandingNode):
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, state, expandingNode)
-	currentNodeIndex += 1
-	
-	return newNode
+	#if we'e already evaluated, short circuit
+	if(isInStateHistory(state)):
+		return None
+	else:
+		newNode = Node(currentNodeIndex, state, expandingNode.nodeID)
+		currentNodeIndex += 1
+		
+		return newNode
 
 #Takes in a Node. 
 #Determines if the action is an appropriate one.
@@ -365,8 +413,10 @@ def actionOneWolf(expandingNode):
 def actionOneWolfOneChicken(expandingNode):
 	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	leftStateResult = leftState = CopyState(expandingNode.state[0])
-	rightStateResult = rightState = CopyState(expandingNode.state[1])
+	leftStateResult = CopyState(expandingNode.state[0])
+	leftState = CopyState(expandingNode.state[0])
+	rightStateResult = CopyState(expandingNode.state[1])
+	rightState = CopyState(expandingNode.state[1])
 
 
 	headLeft = headingLeft(rightState[2])
@@ -415,11 +465,15 @@ def actionOneWolfOneChicken(expandingNode):
 			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
-			
-	newNode = Node(currentNodeIndex, state, expandingNode)
-	currentNodeIndex += 1
-	
-	return newNode
+
+	#if we'e already evaluated, short circuit
+	if(isInStateHistory(state)):
+		return None
+	else:
+		newNode = Node(currentNodeIndex, state, expandingNode.nodeID)
+		currentNodeIndex += 1
+		
+		return newNode
 
 #Takes in a Node. 
 #Determines if the action is an appropriate one.
@@ -429,8 +483,10 @@ def actionOneWolfOneChicken(expandingNode):
 def actionTwoWolf(expandingNode):
 	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	leftStateResult = leftState = CopyState(expandingNode.state[0])
-	rightStateResult = rightState = CopyState(expandingNode.state[1])
+	leftStateResult = CopyState(expandingNode.state[0])
+	leftState = CopyState(expandingNode.state[0])
+	rightStateResult = CopyState(expandingNode.state[1])
+	rightState = CopyState(expandingNode.state[1])
 
 
 	print expandingNode.state
@@ -475,10 +531,14 @@ def actionTwoWolf(expandingNode):
 
 	newState = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, newState, expandingNode)
-	currentNodeIndex += 1
-
-	return newNode
+#if we'e already evaluated, short circuit
+	if(isInStateHistory(state)):
+		return None
+	else:
+		newNode = Node(currentNodeIndex, state, expandingNode.nodeID)
+		currentNodeIndex += 1
+		
+		return newNode
 
 #checks to see if we've had this state in the past or not
 def isInStateHistory(state):
@@ -500,10 +560,10 @@ def evaluateChild(actionNode):
 		#check if this nodes state is the goal state. 
 		if(actionNode.state == goalBankStates):
 			result = solution(actionNode)
-			print "I have a solution!"
-			writeToOutput(true, result)#this will exit the program
+			writeToOutput(result)#this will exit the program
 		else:
 			nodeList.append(actionNode)
+			stateHistory.append(actionNode.state)
 
 			if(mode == "bfs"):
 				FIFO.put(actionNode)
@@ -530,7 +590,6 @@ def bfs():
 			writeToOutput(None) #will exit
 		else:
 			nodeToExpand = FIFO.get()
-			stateHistory.append(nodeToExpand.state) #add to history
 
 			expandedNodesCount += 1
 
