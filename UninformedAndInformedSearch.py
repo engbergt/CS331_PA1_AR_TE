@@ -21,10 +21,20 @@ class Node:
 		self.nodeID = nodeID
 		self.parentNode = parentNode
 		self.state = bankState
+
+def CopyState(state):
+	copiedState = []
+	copiedState.append(state[0])
+	copiedState.append(state[1])
+	copiedState.append(state[2])
+
+	return copiedState
+
 #write the result to output
 #if solutionStates is None, then write no solution
 #otherwise use what you're given with solutionStates
 def writeToOutput(solutionStates):
+	global expandedNodesCount
 	if(".txt" in outputFile):
 		writeFile = open(outputFile, "w+")
 	else:
@@ -67,20 +77,20 @@ def solution(nodeSolution):
 #Declares mode, output file, initializes stateHistory and expanded Nodes count. sets goalBankStates global.
 # retrieves input from command line. does error checking. opens and retrieves data from given files. turns retrieved data into a list. Removes the newline character from the end of each list. then creates a list item that contains the state of both banks (goalBankStates and initialBankStates)
 #returns the initialBankStates
+#TESTED
 def getInput():
-	global mode, outputFile 
-	global expandedNodesCount, stateHistory, goalBankStates
-	global nodeList
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
-	expandedNodesCount = 0
+	currentNodeIndex = 0
 	stateHistory = []
 	nodeList = []
 
 	arguments = len(sys.argv)
-	
+
 	#if we don't have correct # of arguments, then exit.
 	if arguments != 5:
-		print 'Incorrect number of arguments received. Expected 4 additional arguments. Recieved ', (arguments - 1) ,'. Exiting.'
+		print 'Incorrect number of arguments received. Expected 4 additional arguments. Recieved ', (arguments - 1), '\n'
+		print 'I accept parameters as follows. <Initial State> <Goal State> <Mode> <Output File>. \nI am now exiting.\n'
 		exit()
 
 	#set arguments to more readable names
@@ -121,11 +131,30 @@ def getInput():
 	initialState.close()
 	goalState.close()
 
+	#convert string to int since python is stupid
+	leftBankGoal[0] = int(leftBankGoal[0])
+	leftBankGoal[1] = int(leftBankGoal[1])
+	leftBankGoal[2] = int(leftBankGoal[2])
+
+	rightBankGoal[0] = int(rightBankGoal[0])
+	rightBankGoal[1] = int(rightBankGoal[1])
+	rightBankGoal[2] = int(rightBankGoal[2])
+
+	leftBankInitial[0] = int(leftBankInitial[0])
+	leftBankInitial[1] = int(leftBankInitial[1])
+	leftBankInitial[2] = int(leftBankInitial[2])
+
+	rightBankInitial[0] = int(rightBankInitial[0])
+	rightBankInitial[1] = int(rightBankInitial[1])
+	rightBankInitial[2] = int(rightBankInitial[2])
+	
+
 	goalBankStates = [leftBankGoal, rightBankGoal]
 	initialBankState = [leftBankInitial, rightBankInitial]
 
 	initialNode = Node(currentNodeIndex, initialBankState, None)
 	nodeList.append(initialNode)
+
 	currentNodeIndex += 1
 
 	#check if this nodes state is the goal state. 
@@ -147,7 +176,8 @@ def getInput():
 
 #Determines if a boat is heading to the left or not.
 def headingLeft(rightState):
-	if(rightState == 1):
+
+	if(operator.eq(rightState,1)):
 		return True
 	else:
 		return False
@@ -159,41 +189,58 @@ def headingLeft(rightState):
 #Checks that it won't die when going to the new side
 #Returns the calculated child node.
 def actionOneChicken(expandingNode):
-	leftStateResult = leftState = expandingNode.state[0]
-	rightStateResult = rightState = expandingNode.state[1]
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
+
+	leftStateResult = leftState = CopyState(expandingNode.state[0])
+	rightStateResult = rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
-		if(gt(rightState[0], 0) and 
-		   ge((rightState[0] - 1), rightState[1])) and #if we remove a chicken from the right side, will the chickens left live?
-		   ge(leftState[0] + 1, leftState[1]): #will we have an OK number of chickens on the left side as well?
+		if( (operator.gt(rightState[0], 0)) and 
+			(operator.ge((rightState[0] - 1), rightState[1])) and #if we remove a chicken from the right side, will the chickens left live?
+			(operator.ge((leftState[0] + 1), leftState[1])) ): #will we have an OK number of chickens on the left side as well?
 			
 			leftStateResult[0] = leftState[0] + 1
 			leftStateResult[2] = 1
 		 
 			rightStateResult[0] = rightState[0] - 1
 			rightStateResult[2] = 0
+
+			print leftState
+			print rightState
+			print "going left with one chicken"
+
 		else:
+			print leftState
+			print rightState
+			print "can't go left with one chicken"
 			return None#short circuit so we don't save something we shouldn't
 	else:
-		if(gt(leftState[0],0) and
-		   ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
-		   ge((rightState[0] + 1), rightState[1]): #will there be enough chickens on the right side for our chickens to survive?
+		if( (operator.gt(leftState[0],0)) and
+			(operator.ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
+			(operator.ge((rightState[0] + 1), rightState[1])) ): #will there be enough chickens on the right side for our chickens to survive?
 			
 			leftStateResult[0] = leftState[0] -1
 			leftStateResult[2] = 0
 		
 			rightStateResult[0] = rightState[0] + 1
 			rightStateResult[2] = 1
+
+			print leftState
+			print rightState
+			print "going right with one chicken"
 		else:
+			print leftState
+			print rightState
+			print "can't go right with one chicken"
 			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
-			
+	
 	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
-	
+
 	return newNode
 
 #Takes in a Node. 
@@ -203,34 +250,48 @@ def actionOneChicken(expandingNode):
 #Checks that we won't kill the chickens by taking two of them away
 #Returns the calculated child node.
 def actionTwoChicken(expandingNode):
-	leftStateResult = leftState = expandingNode.state[0]
-	rightStateResult = rightState = expandingNode.state[1]
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
+
+	leftStateResult = leftState = CopyState(expandingNode.state[0])
+	rightStateResult = rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
-		if(gt(rightState[0],1) and
-		   ge((rightState[0] - 2), rightState[1])) and #if we remove 2 chickens from the right side, will the remaining chickens survive?
-		   ge((leftState[0] + 2), leftState[1]): #do we have enough chickens in order to survive being moved to this side?
+		if( (operator.gt(rightState[0],1)) and
+			(operator.ge((rightState[0] - 2), rightState[1])) and #if we remove 2 chickens from the right side, will the remaining chickens survive?
+			(operator.ge((leftState[0] + 2), leftState[1])) ): #do we have enough chickens in order to survive being moved to this side?
 			
 			leftStateResult[0] = leftState[0] + 2
 			leftStateResult[2] = 1
 			 
 			rightStateResult[0] = rightState[0] - 2
 			rightStateResult[2] = 0
+			print leftState
+			print rightState
+			print "go left 2 chick"
 		else:
+			print leftState
+			print rightState
+			print "no go left 2 chick"
 			return None #short circuit so we don't save something we shouldn't
 	else:
-		if(gt(leftState[0],1) and
-		   ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
-		   ge((rightState[0] + 2), rightState[1]): #do we have enough chickens in order to survive the right side
+		if( (operator.gt(leftState[0],1)) and
+			(operator.ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
+			(operator.ge((rightState[0] + 2), rightState[1])) ): #do we have enough chickens in order to survive the right side
 
 			leftStateResult[0] = leftState[0] - 2
 			leftStateResult[2] = 0
 			 
 			rightStateResult[0] = rightState[0] + 2
 			rightStateResult[2] = 1
+			print leftState
+			print rightState
+			print "go right 2 chick"
 		else:
+			print leftState
+			print rightState
+			print "no go right 2 chick"
 			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
@@ -246,32 +307,46 @@ def actionTwoChicken(expandingNode):
 #Checks that we won't kill the chickens by adding another wolf to the other side.
 #Returns the calculated child node.
 def actionOneWolf(expandingNode):
-	leftStateResult = leftState = expandingNode.state[0]
-	rightStateResult = rightState = expandingNode.state[1]
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
+
+	leftStateResult = leftState = CopyState(expandingNode.state[0])
+	rightStateResult = rightState = CopyState(expandingNode.state[1])
 
 	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
-		if(gt(rightState[1],0) and
-		   le((leftState[1] + 1), leftState[0])): #by adding another wolf to the left side, do we outweight the chickens?
+		if( (operator.gt(rightState[1],0)) and
+			(operator.le((leftState[1] + 1), leftState[0])) ): #by adding another wolf to the left side, do we outweight the chickens?
 
 			leftStateResult[1] = leftState[1] + 1
 			leftStateResult[2] = 1
 			 
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
+			print leftState
+			print rightState
+			print "go left 1 wolf"
 		else:
+			print leftState
+			print rightState
+			print "no go left 1 wolf"
 			return None #short circuit so we don't save something we shouldn't
 	else:
-		if(gt(leftState[1],0) and
-		   le((rightState[1] + 1), rightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
+		if( (operator.gt(leftState[1],0)) and
+			(operator.le((rightState[1] + 1), rightState[0])) ): #by adding another wolf to the right bank, do we outweight the chickens?
 
 			leftStateResult[1] = leftState[1] - 1
 			leftStateResult[2] = 0
 			 
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
+			print leftState
+			print rightState
+			print "go right 1 wolf"
 		else:
+			print leftState
+			print rightState
+			print "no go right 1 wolf"
 			return None#short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
@@ -288,14 +363,18 @@ def actionOneWolf(expandingNode):
 #Checks that we won't kill the chickens by adding another wolf to the other side.
 #Returns the calculated child node.
 def actionOneWolfOneChicken(expandingNode):
-	leftStateResult = leftState = expandingNode.state[0]
-	rightStateResult = rightState = expandingNode.state[1]
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
+
+	leftStateResult = leftState = CopyState(expandingNode.state[0])
+	rightStateResult = rightState = CopyState(expandingNode.state[1])
+
 
 	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
-		if(gt(rightState[0],0) and gt(rightState[1],0) and
-		   ge((leftState[0] + 1), (leftState[1] + 1))): #if there are more wolves than chickens on the left side now, then goodbye chicken added
+		if( (operator.gt(rightState[0],0)) and 
+			(operator.gt(rightState[1],0)) and
+			(operator.ge((leftState[0] + 1), (leftState[1] + 1))) ): #if there are more wolves than chickens on the left side now, then goodbye chicken added
 
 			leftStateResult[0] = leftState[0] + 1
 			leftStateResult[1] = leftState[1] + 1
@@ -304,11 +383,18 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] - 1
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
+			print leftState
+			print rightState
+			print "go left 1 Chick 1 wolf"
 		else:
+			print leftState
+			print rightState
+			print "no go left 1 Chick 1 wolf"
 			return None #short circuit so we don't save something we shouldn't
 	else:
-		if(gt(leftState[0],0) and gt(leftState[1],0) and
-		   ge((rightState[0] + 1), (rightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
+		if( (operator.gt(leftState[0],0)) and 
+			(operator.gt(leftState[1],0)) and
+			(operator.ge((rightState[0] + 1), (rightState[1] + 1))) ):#if there are more wolves than chickens on the left side now, then goodbye chicken added
 
 			leftStateResult[0] = leftState[0] - 1
 			leftStateResult[1] = leftState[1] - 1
@@ -317,7 +403,15 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] + 1
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
+			print leftState
+			print rightState
+			print "go right 1 Chick 1 wolf"
+			
 		else:
+			print leftState
+			print rightState
+			print "no go right 1 Chick 1 wolf"
+			
 			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
@@ -333,38 +427,55 @@ def actionOneWolfOneChicken(expandingNode):
 #Checks that we won't kill the chickens
 #Returns the calculated child node.
 def actionTwoWolf(expandingNode):
-	leftStateResult = leftState = expandingNode.state[0]
-	rightStateResult = rightState = expandingNode.state[1]
+	global mode, outputFile, stateHistory, goalBankStates, nodeList, currentNodeIndex
 
+	leftStateResult = leftState = CopyState(expandingNode.state[0])
+	rightStateResult = rightState = CopyState(expandingNode.state[1])
+
+
+	print expandingNode.state
 	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
-		if(gt(rightState[1],1) and 
-		   le((leftState[1] + 2), leftState[0])): #by adding two wolves to the left side, do wolves then outweigh chickens?
+		if( (operator.gt(rightState[1],1)) and 
+			(operator.le((leftState[1] + 2), leftState[0])) ): #by adding two wolves to the left side, do wolves then outweigh chickens?
 
 			leftStateResult[1] = leftState[1] + 2
 			leftStateResult[2] = 1
 			 
 			rightStateResult[1] = rightState[1] - 2
 			rightStateResult[2] = 0
+			print leftState
+			print rightState
+			print "go left 2 wolf"
+			
 		else:
+			print leftState
+			print rightState
+			print "no go left 2 wolf"
 			return None#short circuit so we don't save something we shouldn't
 
 	else:
-		if(gt(leftState,1) and 
-		   le((rightState[1] + 2), rightState[0])): #by adding two wolves to the right side, do wolves outweight chickens?			
+		if( (operator.gt(leftState,1)) and 
+			(operator.le((rightState[1] + 2), rightState[0])) ): #by adding two wolves to the right side, do wolves outweight chickens?			
 
 			leftStateResult[1] = leftState[1] - 2
 			leftStateResult[2] = 0
 			 
 			rightStateResult[1] = rightState[1] + 2
 			rightStateResult[2] = 1
+			print leftState
+			print rightState
+			print "go right 2 wolf"
 		else:
+			print leftState
+			print rightState
+			print "no go right 2 wolf"
 			return None#short circuit so we don't save something we shouldn't
 
-	state = [leftStateResult, rightStateResult]
+	newState = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, state, expandingNode)
+	newNode = Node(currentNodeIndex, newState, expandingNode)
 	currentNodeIndex += 1
 
 	return newNode
@@ -381,6 +492,7 @@ def isInStateHistory(state):
 #Otherwise, will see if the node is our goal state. If so, it will call the solution function
 #Else it will append to our list of nodes, and add to the appropriate queue the node before returning.
 def evaluateChild(actionNode):
+	print "i'm evaluating a child"
 	#checks if the nodes state is already in our history
 	if(actionNode == None or isInStateHistory(actionNode.state)):
 		return
@@ -388,6 +500,7 @@ def evaluateChild(actionNode):
 		#check if this nodes state is the goal state. 
 		if(actionNode.state == goalBankStates):
 			result = solution(actionNode)
+			print "I have a solution!"
 			writeToOutput(true, result)#this will exit the program
 		else:
 			nodeList.append(actionNode)
@@ -408,22 +521,30 @@ def evaluateChild(actionNode):
 #Expand all nodes @ a given depth before any nodes at the next level are expanded
 #First node is already in the FIFO Queue.
 def bfs():
+	global expandedNodesCount
+	expandedNodesCount = 0
 	#Everything short circuits. Assuming Finite set of nodes.
-	while(False): 
-		if(FIFO.Empty):
+	while(True): 
+		if(FIFO.empty()):
+			print "I ran out of items"
 			writeToOutput(None) #will exit
 		else:
 			nodeToExpand = FIFO.get()
-			
 			stateHistory.append(nodeToExpand.state) #add to history
+
 			expandedNodesCount += 1
-				
+
 			#go through each action
-			evaluateChild(actionOneChicken(nodeToExpand))
-			evaluateChild(actionTwoChicken(nodeToExpand))
-			evaluateChild(actionOneWolf(nodeToExpand))
-			evaluateChild(actionOneWolfOneChicken(nodeToExpand))
-			evaluateChild(actionTwoWolf(nodeToExpand))
+			oneChicken = actionOneChicken(nodeToExpand)
+			evaluateChild(oneChicken)
+			twoChicken = actionTwoChicken(nodeToExpand)
+			evaluateChild(twoChicken)
+			oneWolf = actionOneWolf(nodeToExpand)
+			evaluateChild(oneWolf)
+			oneWolfOneChicken = actionOneWolfOneChicken(nodeToExpand)
+			evaluateChild(oneWolfOneChicken)
+			twoWolf = actionTwoWolf(nodeToExpand)
+			evaluateChild(twoWolf)
 
 
 				
@@ -454,31 +575,31 @@ def astar():
 #ResultLIFO made as would give us the order print out needed (if we can add to it correctly that is)
 #State gotten by input
 def main():
-	global priorityQueue, FIFO, LIFO, currentNodeIndex
-	currentNodeIndex = 0
+	global priorityQueue, FIFO, LIFO
 
 	#state is the initial starting states of the Left bank and Right bank
 	firstNode = getInput()
+	#tested through initial input. Works correctly.
 
 	if(mode == "bfs"):
-		FIFO = Queue()
+		FIFO = Queue.Queue(0)
 		FIFO.put(firstNode)
 
 		bfs()
 	elif(mode == "dfs"):
-		LIFO = LifoQueue()
+		LIFO = Queue.LifoQueue(0)
 		LIFO.put(firstNode)
 
 		dfs()
 	elif(mode == "iddfs"):
-		LIFO = LifoQueue()
-		FIFO = Queue()
+		LIFO = Queue.LifoQueue(0)
+		FIFO = Queue.Queue(0)
 		FIFO.put(firstNode)
 		LIFO.put(firstNode)
 
 		iddfs()
 	else: #astar
-		priorityQueue = PriorityQueue()
+		priorityQueue = Queue.PriorityQueue(0)
 		priorityQueue.Put(firstNode)
 
 		astar()
