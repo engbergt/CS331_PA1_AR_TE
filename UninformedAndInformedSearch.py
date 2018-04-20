@@ -17,27 +17,27 @@ import operator
 
 # Define the Node class
 class Node:
-	def __init__(self, nodeID, nodeType, parentNodeId): #constructor
+	def __init__(self, nodeID, bankState, parentNodeId): #constructor
 		self.nodeID = nodeID
-		self.nodeType = nodeType
 		self.parentNodeId = parentNodeId
-		self.leftBankList = []
-		self.rightBankList = []
+		self.state = bankState
 		self.childrenIDsList = []
 
+def childNode(state,parent):
 #IE InitializeFrontier
 #read in the input from the command line
+#Declares mode, output file, initializes stateHistory and expanded Nodes count. sets goalBankStates global.
+# retrieves input from command line. does error checking. opens and retrieves data from given files. turns retrieved data into a list. Removes the newline character from the end of each list. then creates a list item that contains the state of both banks (goalBankStates and initialBankStates)
+#returns the initialBankStates
 def getInput():
-	global mode, outputFile, leftBankState, rightBankState, leftBankGoal, rightBankGoal
-	global leftBankInitial, rightBankInitial
-	global expandedNodesCount, stateHistory
+	global mode, outputFile 
+	global expandedNodesCount, stateHistory, goalBankStates
 
-	expandedNodesCount = 1
+	expandedNodesCount = 0
 	stateHistory = []
-	stateHistory.Append([leftBankInitial, rightBankInitial])
 
 	arguments = len(sys.argv)
-	bfs = 'bfs'
+	
 	#if we don't have correct # of arguments, then exit.
 	if arguments != 5:
 		print 'Incorrect number of arguments received. Expected 4 additional arguments. Recieved ', (arguments - 1) ,'. Exiting.'
@@ -62,7 +62,7 @@ def getInput():
 		print goalStateFile, ' is not a file. Exiting.'
 		exit()
 
-
+	#turn read data into a list item
 	#set our initials and goal states
 	leftBankInitial = initialState.readline().split(",")
 	rightBankInitial = initialState.readline().split(",")
@@ -70,10 +70,6 @@ def getInput():
 	#removal of newline character on last element
 	leftBankInitial[-1] = leftBankInitial[-1].strip()
 	rightBankInitial[-1] = rightBankInitial[-1].strip()
-
-
-	leftBankState = leftBankInitial
-	rightBankState = rightBankInitial
 
 	leftBankGoal = goalState.readline().split(",")
 	rightBankGoal = goalState.readline().split(",")
@@ -85,6 +81,10 @@ def getInput():
 	initialState.close()
 	goalState.close()
 
+
+	goalBankStates = [leftBankGoal, rightBankGoal]
+	initialBankStates = [leftBankInitial, rightBankInitial]
+	#TODO CREATE THE INITIAL NODE
 	#initialNode = Node(0, 'initial', -1)
 
 	#verify we have correct modes
@@ -92,12 +92,57 @@ def getInput():
 	    str(mode) == "dfs" or
 	    str(mode) == "iddfs" or
 	    str(mode) == "astar"):
-		return
+		
+		return initialBankStates
+
 	else:
 		print str(mode), 'is not an acceptable mode. Please use bfs, dfs, iddfs, or astar. Exiting.'
 		exit()
 
+def actionOneChicken(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
 
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
+def actionTwoChicken(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
+def actionOneWolf(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
+def actionOneWolfOneChicken(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
+def actionTwoWolf(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
 
 #do one of five actions 
 #    Put one chicken in the boat
@@ -105,10 +150,10 @@ def getInput():
 #    Put one wolf in the boat
 #    Put one wolf and one chicken in the boat
 #    Put two wolves in the boat 
-def action(mode, leftState, rightState):
+#adds nodes to the fifo if the node is acceptable.
+#determines if the new node would cause chicken death.
+def expandBfs(nodeToExpand):
 
-	tempLeftState = leftState
-	tempRightState = rightState
 
 	#if boat is on the right side, we are heading left
 	if(rightState[2] == 1):
@@ -116,175 +161,167 @@ def action(mode, leftState, rightState):
 
 	#1CM = 1 chicken moved
 	#put one chicken in the boat
-	leftBankState1CM = tempLeftState
-	rightBankState1CM = tempRightState
+	leftState1CM = leftState
+	rightState1CM = rightState
 
 	if(headLeft):
-		if(gt(tempRightState[0], 0) and 
-		   ge((tempRightState[0] - 1), tempRightState[1])) and #if we remove a chicken from the right side, will the chickens left live?
-		   ge(tempLeftState[0] + 1, tempLeftState[1]): #will we have an OK number of chickens on the left side as well?
+		if(gt(rightState[0], 0) and 
+		   ge((rightState[0] - 1), rightState[1])) and #if we remove a chicken from the right side, will the chickens left live?
+		   ge(leftState[0] + 1, leftState[1]): #will we have an OK number of chickens on the left side as well?
 			
-			leftBankState1CM[0] = tempLeftState[0] + 1
-			leftBankState1CM[2] = 1
+			leftState1CM[0] = leftState[0] + 1
+			leftState1CM[2] = 1
 		 
-			rightBankState1CM[0] = tempRightState[0] - 1
-			rightBankState1CM[2] = 0
+			rightState1CM[0] = rightState[0] - 1
+			rightState1CM[2] = 0
 
-		else:
-			#we've got nothing
-			leftBankState1CM = None
-			rightBankState1CM = None
+			state = [leftState1CM, rightState1CM]
+			FIFO.put(state)
+
 	else:
-		if(gt(tempLeftState[0],0) and
-		   ge((tempLeftState[0] - 1), tempLeftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
-		   ge((tempRightState[0] + 1), tempRightState[1]): #will there be enough chickens on the right side for our chickens to survive?
+		if(gt(leftState[0],0) and
+		   ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
+		   ge((rightState[0] + 1), rightState[1]): #will there be enough chickens on the right side for our chickens to survive?
 			
-			leftBankState1CM[0] = tempLeftState[0] -1
-			leftBankState1CM[2] = 0
+			leftState1CM[0] = leftState[0] -1
+			leftState1CM[2] = 0
 		
-			rightBankState1CM[0] = tempRightState[0] + 1
-			rightBankState1CM[2] = 1
+			rightState1CM[0] = rightState[0] + 1
+			rightState1CM[2] = 1
 
-		else:
-			#we've got nothing
-			leftBankState1CM = None
-			rightBankState1CM = None
+			state = [leftState1CM, rightState1CM]
+			FIFO.put(state)
+
 
 	#2CM = 2 chickens moved
 	#put two chickens in the boat
-	leftBankState2CM = tempLeftState
-	rightBankState2CM = tempRightState
+	leftState2CM = leftState
+	rightState2CM = rightState
 
 	if(headLeft):
-		if(gt(tempRightState[0],1) and
-		   ge((tempRightState[0] - 2), tempRightState[1])) and #if we remove 2 chickens from the right side, will the remaining chickens survive?
-		   ge((tempLeftState[0] + 2), tempLeftState[1]): #do we have enough chickens in order to survive being moved to this side?
+		if(gt(rightState[0],1) and
+		   ge((rightState[0] - 2), rightState[1])) and #if we remove 2 chickens from the right side, will the remaining chickens survive?
+		   ge((leftState[0] + 2), leftState[1]): #do we have enough chickens in order to survive being moved to this side?
 			
-			leftBankState2CM[0] = tempLeftState[0] + 2
-			leftBankState2CM[2] = 1
+			leftState2CM[0] = leftState[0] + 2
+			leftState2CM[2] = 1
 			 
-			rightBankState2CM[0] = tempRightState[0] - 2
-			rightBankState2CM[2] = 0
+			rightState2CM[0] = rightState[0] - 2
+			rightState2CM[2] = 0
 
-		else:
-			leftBankState2CM = None
-			rightBankState2CM = None
+			state = [leftState2CM, rightState2CM]
+			FIFO.put(state)
 	else:
-		if(gt(tempLeftState[0],1) and
-		   ge((tempLeftState[0] - 2), tempLeftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
-		   ge((tempRightState[0] + 2), tempRightState[1]): #do we have enough chickens in order to survive the right side
+		if(gt(leftState[0],1) and
+		   ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
+		   ge((rightState[0] + 2), rightState[1]): #do we have enough chickens in order to survive the right side
 
-			leftBankState2CM[0] = tempLeftState[0] - 2
-			leftBankState2CM[2] = 0
+			leftState2CM[0] = leftState[0] - 2
+			leftState2CM[2] = 0
 			 
-			rightBankState2CM[0] = tempRightState[0] + 2
-			rightBankState2CM[2] = 1
+			rightState2CM[0] = rightState[0] + 2
+			rightState2CM[2] = 1
 
-		else:
-			leftBankState2CM = None
-			rightBankState2CM = None
+			state = [leftState2CM, rightState2CM]
+			FIFO.put(state)
 
 	#1WM = 1 wolf moved
 	#put one wolf in the boat
-	leftBankState1WM = tempLeftState
-	rightBankState1WM = tempRightState	
+	leftState1WM = leftState
+	rightState1WM = rightState	
 
 	if(headLeft):
-		if(gt(tempRightState[1],0) and
-		   le((tempLeftState[1] + 1), tempLeftState[0])): #by adding another wolf to the left side, do we outweight the chickens?
+		if(gt(rightState[1],0) and
+		   le((leftState[1] + 1), leftState[0])): #by adding another wolf to the left side, do we outweight the chickens?
 
-			leftBankState1WM[1] = tempLeftState[1] + 1
-			leftBankState1WM[2] = 1
+			leftState1WM[1] = leftState[1] + 1
+			leftState1WM[2] = 1
 			 
-			rightBankState1WM[1] = tempRightState[1] - 1
-			rightBankState1WM[2] = 0
+			rightState1WM[1] = rightState[1] - 1
+			rightState1WM[2] = 0
 
-		else:
-			leftBankState1WM = None
-			rightBankState1WM = None
+			state = [leftState1WM, rightState1WM]
+			FIFO.put(state)
+
 	else:
-		if(gt(tempLeftState[1],0) and
-		   le((tempRightState[1] + 1), tempRightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
+		if(gt(leftState[1],0) and
+		   le((rightState[1] + 1), rightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
 
-			leftBankState1WM[1] = tempLeftState[1] - 1
-			leftBankState1WM[2] = 0
+			leftState1WM[1] = leftState[1] - 1
+			leftState1WM[2] = 0
 			 
-			rightBankState1WM[1] = tempRightState[1] + 1
-			rightBankState1WM[2] = 1
+			rightState1WM[1] = rightState[1] + 1
+			rightState1WM[2] = 1
 
-		else:
-			leftBankState1WM = None
-			rightBankState1WM = None
+			state = [leftState1WM, rightState1WM]
+			FIFO.put(state)
 
 	#1CWM = 1 chicken and 1 wolf moved
 	#put one wolf and one chicken in the boat
-	leftBankState1CWM = tempLeftState
-	rightBankState1CWM = tempRightState
+	leftState1CWM = leftState
+	rightState1CWM = rightState
 	
 	if(headLeft):
-		if(gt(tempRightState[0],0) and gt(tempRightState[1],0) and
-		   ge((tempLeftState[0] + 1), (tempLeftState[1] + 1))): #if there are more wolves than chickens on the left side now, then goodbye chicken added
+		if(gt(rightState[0],0) and gt(rightState[1],0) and
+		   ge((leftState[0] + 1), (leftState[1] + 1))): #if there are more wolves than chickens on the left side now, then goodbye chicken added
 
-			leftBankState1CWM[0] = tempLeftState[0] + 1
-			leftBankState1CWM[1] = tempLeftState[1] + 1
-			leftBankState1CWM[2] = 1
+			leftState1CWM[0] = leftState[0] + 1
+			leftState1CWM[1] = leftState[1] + 1
+			leftState1CWM[2] = 1
 			 
-			rightBankState1CWM[0] = tempRightState[0] - 1
-			rightBankState1CWM[1] = tempRightState[1] - 1
-			rightBankState1CWM[2] = 0
+			rightState1CWM[0] = rightState[0] - 1
+			rightState1CWM[1] = rightState[1] - 1
+			rightState1CWM[2] = 0
 
-		else:
-			leftBankState1CWM = None
-			rightBankState1CWM = None
+			state = [leftState1CWM, rightState1CWM]
+			FIFO.put(state)
+
 	else:
-		if(gt(tempLeftState[0],0) and gt(tempLeftState[1],0) and
-		   ge((tempRightState[0] + 1), (tempRightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
+		if(gt(leftState[0],0) and gt(leftState[1],0) and
+		   ge((rightState[0] + 1), (rightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
 
-			leftBankState1CWM[0] = tempLeftState[0] - 1
-			leftBankState1CWM[1] = tempLeftState[1] - 1
-			leftBankState1CWM[2] = 0
+			leftState1CWM[0] = leftState[0] - 1
+			leftState1CWM[1] = leftState[1] - 1
+			leftState1CWM[2] = 0
 			 
-			rightBankState1CWM[0] = tempRightState[0] + 1
-			rightBankState1CWM[1] = tempRightState[1] + 1
-			rightBankState1CWM[2] = 1
+			rightState1CWM[0] = rightState[0] + 1
+			rightState1CWM[1] = rightState[1] + 1
+			rightState1CWM[2] = 1
 
-		else:
-			leftBankState1CWM = None
-			rightBankState1CWM = None
+			state = [leftState1CWM, rightState1CWM]
+			FIFO.put(state)
+
 
 	#put two wolves in the boat
 	#2WM = 2 wolves moved
-	leftBankState2WM = tempLeftState
-	rightBankState2WM = tempRightState
+	leftState2WM = leftState
+	rightState2WM = rightState
 	
 	if(headLeft):
-		if(gt(tempRightState[1],1) and 
-		   le((tempLeftState[1] + 2), tempLeftState[0])): #by adding two wolves to the left side, do wolves then outweigh chickens?
+		if(gt(rightState[1],1) and 
+		   le((leftState[1] + 2), leftState[0])): #by adding two wolves to the left side, do wolves then outweigh chickens?
 
-			leftBankState2WM[1] = tempLeftState[1] + 2
-			leftBankState2WM[2] = 1
+			leftState2WM[1] = leftState[1] + 2
+			leftState2WM[2] = 1
 			 
-			rightBankState2WM[1] = tempRightState[1] - 2
-			rightBankState2WM[2] = 0
+			rightState2WM[1] = rightState[1] - 2
+			rightState2WM[2] = 0
 
-		else:
-			leftBankState2WM = None
-			rightBankState2WM = None
+			state = [leftState2WM, rightState2WM]
+			FIFO.put(state)
+
 	else:
-		if(gt(tempLeftState,1) and 
-		   le((tempRightState[1] + 2), tempRightState[0])): #by adding two wolves to the right side, do wolves outweight chickens?			
+		if(gt(leftState,1) and 
+		   le((rightState[1] + 2), rightState[0])): #by adding two wolves to the right side, do wolves outweight chickens?			
 
-			leftBankState2WM[1] = tempLeftState[1] - 2
-			leftBankState2WM[2] = 0
+			leftState2WM[1] = leftState[1] - 2
+			leftState2WM[2] = 0
 			 
-			rightBankState2WM[1] = tempRightState[1] + 2
-			rightBankState2WM[2] = 1
+			rightState2WM[1] = rightState[1] + 2
+			rightState2WM[2] = 1
 
-		else:
-			leftBankState2WM = None
-			rightBankState2WM = None
-
-    #TODO Add everything to either a lifo or fifo
+			state = [leftState2WM, rightState2WM]
+			FIFO.put(state)
 
 	return
 
@@ -296,49 +333,61 @@ def writeToOutput(solutionFound, solutionStates):
 		writeFile = open(outputFile + ".txt", "w+")
 	
 	if(solutionFound == False):
-		print noSolution
-		writeFile.write(noSolution + "\n");
+		print "No solution found.\n"
+		writeFile.write("No solution found.\n")
 	else:
-		writeFile.write("Solution States: \n" + solutionStates)
+		writeFile.write("Solution Found \n")
+		writeFile.write("Solution States: \n" + solutionStates + "\n")
+		writeFile.write("Number of nodes expanded: " + expandedNodesCount + "\n")				
+	writeFile.close()
+	exit()
 
-	writeFile				
+#checks to see if we've had this state in the past or not
+def isInStateHistory(state):
+	if(state in stateHistory):
+		return True
+	else:
+		return False
 
-
-
+#TODO define
+def solution(nodeSolution):
+	return
 
 #Breadth-First Search
 #FIFO Queue
 #Expand all nodes @ a given depth before any nodes at the next level are expanded
-def bfs():
-	global fifo
-	
-	solutionFound = False
-
-	fifo = Queue()
-	fifo.put([leftBankState, rightBankState])
+def bfs(nodeToExpand):
 
 	#verify that this is putting these in as a pair
 	while(solutionFound is False):
-		if(fifo.Empty):
-			writeToOutput(False,)
-		nodeToExpand = fifo.get()
-
-
-		#check if this node is the goal state. if not. continue
-		#else print it
-		if():
-
-			writeToOutput(True,)
+		#no solution was found
+		if(FIFO.Empty):
+			writeToOutput(False) #will exit
 		else:
-			stateHistory.Append(nodeToExpand) #add to history
+			nodeToExpand = FIFO.get()
+
+			#check if this nodes state is the goal state. 
+			if(nodeToExpand.state == goalBankStates):
+				#if its the goal state. Append it to a last in first out.
+				return solution(nodeToExpand)
+				#TODO need to somehow return the entire thing up the line for the successful nodes
+			else:
+				#checks if the nodes state is already in our history
+				haveExpanded = isInStateHistory(nodeToExpand.state)
+				#go in if not expanded
+				if(haveExpanded == False):	
+					stateHistory.Append(nodeToExpand.state) #add to history
+					expandedNodesCount += 1
+
+					expandBfs(nodeToExpand)
+
+
+				
 #Depth-First Search
 #LIFO Queue
 #Expands the deepest node in the current fringe of the search tree
 def dfs():
-	global lifo
-	global expandedNodesCount
 
-	lifo = LifoQueue()
 
 
 	return
@@ -347,29 +396,39 @@ def dfs():
 #Do Depth First with depth limit, iterate up depth limit until a goal is found.
 #Merge of depth and breadth
 def iddfs():
-	global expandedNodesCount
 
 	return
 
 
 def astar():
-global expandedNodesCount
 
 
 	return
 
+#LIFO and FIFO made global. Initialized at beginning of program. Each have initial state added to them.
+#ResultLIFO made as would give us the order print out needed (if we can add to it correctly that is)
+#State gotten by input
 def main():
-	global noSolution
-	noSolution = "No solution found."
+	global solutionFound, FIFO, LIFO, currentNodeIndex
 
-	getInput()
+	currentNodeIndex = 0
+	solutionFound = False
+	LIFO = LifoQueue()
+	resultLifo = LifoQueue()
+	FIFO = Queue()
+	#state is the initial starting states of the Left bank and Right bank
+	firstNode = getInput()
+
+	FIFO.put(firstNode)
+	LIFO.put(firstNode)
+
 	if(mode == "bfs"):
-		bfs()
+		bfs(firstNode)
 	elif(mode == "dfs"):
-		dfs()
+		dfs(firstNode)
 	elif(mode == "iddfs"):
-		iddfs()
+		iddfs(firstNode)
 	else: #astar
-		astar()
+		astar(firstNode)
 
 main()
