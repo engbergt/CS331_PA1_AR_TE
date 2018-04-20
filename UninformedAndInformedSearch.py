@@ -103,79 +103,31 @@ def actionOneChicken(expandingNode):
 	leftState = expandingNode.state[0]
 	rightState = expandingNode.state[1]
 
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
-
-def actionTwoChicken(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
-
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
-
-def actionOneWolf(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
-
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
-
-def actionOneWolfOneChicken(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
-
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
-
-def actionTwoWolf(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
-
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
-
-#do one of five actions 
-#    Put one chicken in the boat
-#    Put two chickens in the boat
-#    Put one wolf in the boat
-#    Put one wolf and one chicken in the boat
-#    Put two wolves in the boat 
-#adds nodes to the fifo if the node is acceptable.
-#determines if the new node would cause chicken death.
-def expandBfs(nodeToExpand):
-
+	leftStateResult = leftState
+	rightStateResult = rightState
 
 	#if boat is on the right side, we are heading left
 	if(rightState[2] == 1):
 		headLeft = True
-
-	#1CM = 1 chicken moved
-	#put one chicken in the boat
-	leftState1CM = leftState
-	rightState1CM = rightState
+	else: 
+		headLeft = False
 
 	if(headLeft):
 		if(gt(rightState[0], 0) and 
 		   ge((rightState[0] - 1), rightState[1])) and #if we remove a chicken from the right side, will the chickens left live?
 		   ge(leftState[0] + 1, leftState[1]): #will we have an OK number of chickens on the left side as well?
 			
-			leftState1CM[0] = leftState[0] + 1
-			leftState1CM[2] = 1
+			leftStateResult[0] = leftState[0] + 1
+			leftStateResult[2] = 1
 		 
-			rightState1CM[0] = rightState[0] - 1
-			rightState1CM[2] = 0
+			rightStateResult[0] = rightState[0] - 1
+			rightStateResult[2] = 0
 
-			state = [leftState1CM, rightState1CM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
+
 			FIFO.put(state)
 
 	else:
@@ -183,147 +135,211 @@ def expandBfs(nodeToExpand):
 		   ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
 		   ge((rightState[0] + 1), rightState[1]): #will there be enough chickens on the right side for our chickens to survive?
 			
-			leftState1CM[0] = leftState[0] -1
-			leftState1CM[2] = 0
+			leftStateResult[0] = leftState[0] -1
+			leftStateResult[2] = 0
 		
-			rightState1CM[0] = rightState[0] + 1
-			rightState1CM[2] = 1
+			rightStateResult[0] = rightState[0] + 1
+			rightStateResult[2] = 1
 
-			state = [leftState1CM, rightState1CM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
+def actionTwoChicken(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
 
-	#2CM = 2 chickens moved
-	#put two chickens in the boat
-	leftState2CM = leftState
-	rightState2CM = rightState
+	leftStateResult = leftState
+	rightStateResult = rightState
+
+	#if boat is on the right side, we are heading left
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
 
 	if(headLeft):
 		if(gt(rightState[0],1) and
 		   ge((rightState[0] - 2), rightState[1])) and #if we remove 2 chickens from the right side, will the remaining chickens survive?
 		   ge((leftState[0] + 2), leftState[1]): #do we have enough chickens in order to survive being moved to this side?
 			
-			leftState2CM[0] = leftState[0] + 2
-			leftState2CM[2] = 1
+			leftStateResult[0] = leftState[0] + 2
+			leftStateResult[2] = 1
 			 
-			rightState2CM[0] = rightState[0] - 2
-			rightState2CM[2] = 0
+			rightStateResult[0] = rightState[0] - 2
+			rightStateResult[2] = 0
 
-			state = [leftState2CM, rightState2CM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 	else:
 		if(gt(leftState[0],1) and
 		   ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
 		   ge((rightState[0] + 2), rightState[1]): #do we have enough chickens in order to survive the right side
 
-			leftState2CM[0] = leftState[0] - 2
-			leftState2CM[2] = 0
+			leftStateResult[0] = leftState[0] - 2
+			leftStateResult[2] = 0
 			 
-			rightState2CM[0] = rightState[0] + 2
-			rightState2CM[2] = 1
+			rightStateResult[0] = rightState[0] + 2
+			rightStateResult[2] = 1
 
-			state = [leftState2CM, rightState2CM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
+
 			FIFO.put(state)
 
-	#1WM = 1 wolf moved
-	#put one wolf in the boat
-	leftState1WM = leftState
-	rightState1WM = rightState	
+
+def actionOneWolf(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	leftStateResult = leftState
+	rightStateResult = rightState
+
+	#if boat is on the right side, we are heading left
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
 
 	if(headLeft):
 		if(gt(rightState[1],0) and
 		   le((leftState[1] + 1), leftState[0])): #by adding another wolf to the left side, do we outweight the chickens?
 
-			leftState1WM[1] = leftState[1] + 1
-			leftState1WM[2] = 1
+			leftStateResult[1] = leftState[1] + 1
+			leftStateResult[2] = 1
 			 
-			rightState1WM[1] = rightState[1] - 1
-			rightState1WM[2] = 0
+			rightStateResult[1] = rightState[1] - 1
+			rightStateResult[2] = 0
 
-			state = [leftState1WM, rightState1WM]
+			state = [leftStateResult, rightStateResult]
+			
+
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
 	else:
 		if(gt(leftState[1],0) and
 		   le((rightState[1] + 1), rightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
 
-			leftState1WM[1] = leftState[1] - 1
-			leftState1WM[2] = 0
+			leftStateResult[1] = leftState[1] - 1
+			leftStateResult[2] = 0
 			 
-			rightState1WM[1] = rightState[1] + 1
-			rightState1WM[2] = 1
+			rightStateResult[1] = rightState[1] + 1
+			rightStateResult[2] = 1
 
-			state = [leftState1WM, rightState1WM]
+			state = [leftStateResult, rightStateResult]
+			
+
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
-	#1CWM = 1 chicken and 1 wolf moved
-	#put one wolf and one chicken in the boat
-	leftState1CWM = leftState
-	rightState1CWM = rightState
-	
+
+def actionOneWolfOneChicken(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	leftStateResult = leftState
+	rightStateResult = rightState
+
+
+	#if boat is on the right side, we are heading left
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
 	if(headLeft):
 		if(gt(rightState[0],0) and gt(rightState[1],0) and
 		   ge((leftState[0] + 1), (leftState[1] + 1))): #if there are more wolves than chickens on the left side now, then goodbye chicken added
 
-			leftState1CWM[0] = leftState[0] + 1
-			leftState1CWM[1] = leftState[1] + 1
-			leftState1CWM[2] = 1
+			leftStateResult[0] = leftState[0] + 1
+			leftStateResult[1] = leftState[1] + 1
+			leftStateResult[2] = 1
 			 
-			rightState1CWM[0] = rightState[0] - 1
-			rightState1CWM[1] = rightState[1] - 1
-			rightState1CWM[2] = 0
+			rightStateResult[0] = rightState[0] - 1
+			rightStateResult[1] = rightState[1] - 1
+			rightStateResult[2] = 0
 
-			state = [leftState1CWM, rightState1CWM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
 	else:
 		if(gt(leftState[0],0) and gt(leftState[1],0) and
 		   ge((rightState[0] + 1), (rightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
 
-			leftState1CWM[0] = leftState[0] - 1
-			leftState1CWM[1] = leftState[1] - 1
-			leftState1CWM[2] = 0
+			leftStateResult[0] = leftState[0] - 1
+			leftStateResult[1] = leftState[1] - 1
+			leftStateResult[2] = 0
 			 
-			rightState1CWM[0] = rightState[0] + 1
-			rightState1CWM[1] = rightState[1] + 1
-			rightState1CWM[2] = 1
+			rightStateResult[0] = rightState[0] + 1
+			rightStateResult[1] = rightState[1] + 1
+			rightStateResult[2] = 1
 
-			state = [leftState1CWM, rightState1CWM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
 
-	#put two wolves in the boat
-	#2WM = 2 wolves moved
-	leftState2WM = leftState
-	rightState2WM = rightState
-	
+
+def actionTwoWolf(expandingNode):
+	leftState = expandingNode.state[0]
+	rightState = expandingNode.state[1]
+
+	leftStateResult = leftState
+	rightStateResult = rightState
+
+	#if boat is on the right side, we are heading left
+	if(rightState[2] == 1):
+		headLeft = True
+	else: 
+		headLeft = False
+
 	if(headLeft):
 		if(gt(rightState[1],1) and 
 		   le((leftState[1] + 2), leftState[0])): #by adding two wolves to the left side, do wolves then outweigh chickens?
 
-			leftState2WM[1] = leftState[1] + 2
-			leftState2WM[2] = 1
+			leftStateResult[1] = leftState[1] + 2
+			leftStateResult[2] = 1
 			 
-			rightState2WM[1] = rightState[1] - 2
-			rightState2WM[2] = 0
+			rightStateResult[1] = rightState[1] - 2
+			rightStateResult[2] = 0
 
-			state = [leftState2WM, rightState2WM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
 	else:
 		if(gt(leftState,1) and 
 		   le((rightState[1] + 2), rightState[0])): #by adding two wolves to the right side, do wolves outweight chickens?			
 
-			leftState2WM[1] = leftState[1] - 2
-			leftState2WM[2] = 0
+			leftStateResult[1] = leftState[1] - 2
+			leftStateResult[2] = 0
 			 
-			rightState2WM[1] = rightState[1] + 2
-			rightState2WM[2] = 1
+			rightStateResult[1] = rightState[1] + 2
+			rightStateResult[2] = 1
 
-			state = [leftState2WM, rightState2WM]
+			state = [leftStateResult, rightStateResult]
+			
+			#TODO Create the new child node
+
 			FIFO.put(state)
 
-	return
 
 #write the result to output
 def writeToOutput(solutionFound, solutionStates):
@@ -414,13 +430,15 @@ def main():
 	currentNodeIndex = 0
 	solutionFound = False
 	LIFO = LifoQueue()
-	resultLifo = LifoQueue()
+	priorityQueue = PriorityQueue()
 	FIFO = Queue()
+	
 	#state is the initial starting states of the Left bank and Right bank
 	firstNode = getInput()
 
 	FIFO.put(firstNode)
 	LIFO.put(firstNode)
+	priorityQueue.Put(firstNode)
 
 	if(mode == "bfs"):
 		bfs(firstNode)
