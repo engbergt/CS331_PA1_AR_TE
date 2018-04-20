@@ -17,13 +17,51 @@ import operator
 
 # Define the Node class
 class Node:
-	def __init__(self, nodeID, bankState, parentNodeId): #constructor
+	def __init__(self, nodeID, bankState, parentNode): #constructor
 		self.nodeID = nodeID
-		self.parentNodeId = parentNodeId
+		self.parentNode = parentNode
 		self.state = bankState
-		self.childrenIDsList = []
+#write the result to output
+#if solutionStates is None, then write no solution
+#otherwise use what you're given with solutionStates
+def writeToOutput(solutionStates):
+	if(".txt" in outputFile):
+		writeFile = open(outputFile, "w+")
+	else:
+		writeFile = open(outputFile + ".txt", "w+")
+	
+	if(solutionStates == None):
+		print "No solution found.\n"
+		writeFile.write("No solution found.\n")
+	else:
+		writeFile.write("Solution Found \n")
+		writeFile.write("Solution States: \n" + solutionStates + "\n")
+		writeFile.write("Number of nodes expanded: " + expandedNodesCount + "\n")				
+	writeFile.close()
+	exit()
 
-def childNode(state,parent):
+#Takes in the lastmost node that has the same state as the goal
+#Retrieves the Parent States and creates the path from the parent to the goal state.
+#returns a list of the states from root to goal
+def solution(nodeSolution):
+	results = []
+	results.append(nodeSolution.state)
+	parent = nodeSolution.parentNode
+
+	#go until we've added the root node
+	while(not(parent == None)):
+		#find the next node in our list based on our parent
+
+		nextNode = nodeList.pop(parent)
+		
+		#add that node to our results
+		results.append(nextNode.state)
+		#set our new parent node
+		parent = nextNode.parentNode
+
+	#return our list in reverse so the first item is our root
+	return results.reverse()
+
 #IE InitializeFrontier
 #read in the input from the command line
 #Declares mode, output file, initializes stateHistory and expanded Nodes count. sets goalBankStates global.
@@ -32,9 +70,11 @@ def childNode(state,parent):
 def getInput():
 	global mode, outputFile 
 	global expandedNodesCount, stateHistory, goalBankStates
+	global nodeList
 
 	expandedNodesCount = 0
 	stateHistory = []
+	nodeList = []
 
 	arguments = len(sys.argv)
 	
@@ -81,11 +121,17 @@ def getInput():
 	initialState.close()
 	goalState.close()
 
-
 	goalBankStates = [leftBankGoal, rightBankGoal]
-	initialBankStates = [leftBankInitial, rightBankInitial]
-		initialNode = Node(currentNodeIndex, initialBankState, -1)
+	initialBankState = [leftBankInitial, rightBankInitial]
+
+	initialNode = Node(currentNodeIndex, initialBankState, None)
+	nodeList.append(initialNode)
 	currentNodeIndex += 1
+
+	#check if this nodes state is the goal state. 
+	if(initialNode.state == goalBankStates):
+		result = solution(initialNode)
+		writeToOutput(result)#this will exit the program
 
 	#verify we have correct modes
 	if (str(mode) == "bfs" or
@@ -99,18 +145,24 @@ def getInput():
 		print str(mode), 'is not an acceptable mode. Please use bfs, dfs, iddfs, or astar. Exiting.'
 		exit()
 
+#Determines if a boat is heading to the left or not.
+def headingLeft(rightState):
+	if(rightState == 1):
+		return True
+	else:
+		return False
+
+#Takes in a Node. 
+#Determines if the action is an appropriate one.
+#Checks that we only move the chicken if there is one to move
+#Checks that we won't kill the chickens by taking one of them away
+#Checks that it won't die when going to the new side
+#Returns the calculated child node.
 def actionOneChicken(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
+	leftStateResult = leftState = expandingNode.state[0]
+	rightStateResult = rightState = expandingNode.state[1]
 
-	leftStateResult = leftState
-	rightStateResult = rightState
-
-	#if boat is on the right side, we are heading left
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
+	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
 		if(gt(rightState[0], 0) and 
@@ -123,7 +175,7 @@ def actionOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] - 1
 			rightStateResult[2] = 0
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None#short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],0) and
 		   ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
@@ -135,41 +187,26 @@ def actionOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] + 1
 			rightStateResult[2] = 1
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
-	expandingNode.childrenIDsList.append(newNode.nodeID)
-
+	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
 	
-	if(mode == "bfs"):
-		FIFO.put(newNode)
-	elif(mode == "dfs"):
-		LIFO.put(newNode)
+	return newNode
 
-	elif(mode == "iddfs"):
-		FIFO.put(newNode)
-		LIFO.put(newNode)
-
-	else: #astar
-		priorityQueue.put(newNode)
-
-	return
-
+#Takes in a Node. 
+#Determines if the action is an appropriate one.
+#Checks that we only move the two chickens if there are two to move
+#Checks that they won't die when going to the new side
+#Checks that we won't kill the chickens by taking two of them away
+#Returns the calculated child node.
 def actionTwoChicken(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
+	leftStateResult = leftState = expandingNode.state[0]
+	rightStateResult = rightState = expandingNode.state[1]
 
-	leftStateResult = leftState
-	rightStateResult = rightState
-
-	#if boat is on the right side, we are heading left
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
+	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
 		if(gt(rightState[0],1) and
@@ -182,7 +219,7 @@ def actionTwoChicken(expandingNode):
 			rightStateResult[0] = rightState[0] - 2
 			rightStateResult[2] = 0
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],1) and
 		   ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
@@ -194,42 +231,25 @@ def actionTwoChicken(expandingNode):
 			rightStateResult[0] = rightState[0] + 2
 			rightStateResult[2] = 1
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
-	expandingNode.childrenIDsList.append(newNode.nodeID)
-
+	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
 	
-	if(mode == "bfs"):
-		FIFO.put(newNode)
-	elif(mode == "dfs"):
-		LIFO.put(newNode)
+	return newNode
 
-	elif(mode == "iddfs"):
-		FIFO.put(newNode)
-		LIFO.put(newNode)
-
-	else: #astar
-		priorityQueue.put(newNode)
-	
-	return
-
-
+#Takes in a Node. 
+#Determines if the action is an appropriate one.
+#Checks that we only move a wolf if there is one to move
+#Checks that we won't kill the chickens by adding another wolf to the other side.
+#Returns the calculated child node.
 def actionOneWolf(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
+	leftStateResult = leftState = expandingNode.state[0]
+	rightStateResult = rightState = expandingNode.state[1]
 
-	leftStateResult = leftState
-	rightStateResult = rightState
-
-	#if boat is on the right side, we are heading left
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
+	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
 		if(gt(rightState[1],0) and
@@ -241,7 +261,7 @@ def actionOneWolf(expandingNode):
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[1],0) and
 		   le((rightState[1] + 1), rightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
@@ -252,43 +272,26 @@ def actionOneWolf(expandingNode):
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None#short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
-	expandingNode.childrenIDsList.append(newNode.nodeID)
-
+	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
 	
-	if(mode == "bfs"):
-		FIFO.put(newNode)
-	elif(mode == "dfs"):
-		LIFO.put(newNode)
+	return newNode
 
-	elif(mode == "iddfs"):
-		FIFO.put(newNode)
-		LIFO.put(newNode)
-
-	else: #astar
-		priorityQueue.put(newNode)
-
-	return
-
-
+#Takes in a Node. 
+#Determines if the action is an appropriate one.
+#Checks that we only move a wolf if there is one to move
+#Checks that we only move a chicken if there is one to move
+#Checks that we won't kill the chickens by adding another wolf to the other side.
+#Returns the calculated child node.
 def actionOneWolfOneChicken(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
+	leftStateResult = leftState = expandingNode.state[0]
+	rightStateResult = rightState = expandingNode.state[1]
 
-	leftStateResult = leftState
-	rightStateResult = rightState
-
-
-	#if boat is on the right side, we are heading left
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
+	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
 		if(gt(rightState[0],0) and gt(rightState[1],0) and
@@ -302,7 +305,7 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],0) and gt(leftState[1],0) and
 		   ge((rightState[0] + 1), (rightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
@@ -315,42 +318,25 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None #short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
-	expandingNode.childrenIDsList.append(newNode.nodeID)
-
+	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
 	
-	if(mode == "bfs"):
-		FIFO.put(newNode)
-	elif(mode == "dfs"):
-		LIFO.put(newNode)
+	return newNode
 
-	elif(mode == "iddfs"):
-		FIFO.put(newNode)
-		LIFO.put(newNode)
-
-	else: #astar
-		priorityQueue.put(newNode)
-
-	return
-
-
+#Takes in a Node. 
+#Determines if the action is an appropriate one.
+#Checks that we only move two wolves if there are two wolves to move
+#Checks that we won't kill the chickens
+#Returns the calculated child node.
 def actionTwoWolf(expandingNode):
-	leftState = expandingNode.state[0]
-	rightState = expandingNode.state[1]
+	leftStateResult = leftState = expandingNode.state[0]
+	rightStateResult = rightState = expandingNode.state[1]
 
-	leftStateResult = leftState
-	rightStateResult = rightState
-
-	#if boat is on the right side, we are heading left
-	if(rightState[2] == 1):
-		headLeft = True
-	else: 
-		headLeft = False
+	headLeft = headingLeft(rightState[2])
 
 	if(headLeft):
 		if(gt(rightState[1],1) and 
@@ -362,7 +348,7 @@ def actionTwoWolf(expandingNode):
 			rightStateResult[1] = rightState[1] - 2
 			rightStateResult[2] = 0
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None#short circuit so we don't save something we shouldn't
 
 	else:
 		if(gt(leftState,1) and 
@@ -374,47 +360,14 @@ def actionTwoWolf(expandingNode):
 			rightStateResult[1] = rightState[1] + 2
 			rightStateResult[2] = 1
 		else:
-			return #short circuit so we don't save something we shouldn't
+			return None#short circuit so we don't save something we shouldn't
 
 	state = [leftStateResult, rightStateResult]
 			
-	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
-	expandingNode.childrenIDsList.append(newNode.nodeID)
-
+	newNode = Node(currentNodeIndex, state, expandingNode)
 	currentNodeIndex += 1
 
-	if(mode == "bfs"):
-		FIFO.put(newNode)
-	elif(mode == "dfs"):
-		LIFO.put(newNode)
-
-	elif(mode == "iddfs"):
-		FIFO.put(newNode)
-		LIFO.put(newNode)
-
-	else: #astar
-		priorityQueue.put(newNode)
-
-	return
-
-
-
-#write the result to output
-def writeToOutput(solutionFound, solutionStates):
-	if(".txt" in outputFile):
-		writeFile = open(outputFile, "w+")
-	else:
-		writeFile = open(outputFile + ".txt", "w+")
-	
-	if(solutionFound == False):
-		print "No solution found.\n"
-		writeFile.write("No solution found.\n")
-	else:
-		writeFile.write("Solution Found \n")
-		writeFile.write("Solution States: \n" + solutionStates + "\n")
-		writeFile.write("Number of nodes expanded: " + expandedNodesCount + "\n")				
-	writeFile.close()
-	exit()
+	return newNode
 
 #checks to see if we've had this state in the past or not
 def isInStateHistory(state):
@@ -423,43 +376,61 @@ def isInStateHistory(state):
 	else:
 		return False
 
-#TODO define
-def solution(nodeSolution):
+#takes in a Node
+#Determines if it is a node that exists, and if so, whose state we've already evaluated.If so, returns
+#Otherwise, will see if the node is our goal state. If so, it will call the solution function
+#Else it will append to our list of nodes, and add to the appropriate queue the node before returning.
+def evaluateChild(actionNode):
+	#checks if the nodes state is already in our history
+	if(actionNode == None or isInStateHistory(actionNode.state)):
+		return
+	else:
+		#check if this nodes state is the goal state. 
+		if(actionNode.state == goalBankStates):
+			result = solution(actionNode)
+			writeToOutput(true, result)#this will exit the program
+		else:
+			nodeList.append(actionNode)
+
+			if(mode == "bfs"):
+				FIFO.put(actionNode)
+			elif(mode == "dfs"):
+				LIFO.put(actionNode)
+			elif(mode == "iddfs"):
+				FIFO.put(actionNode)
+				LIFO.put(actionNode)
+			else: #astar
+				priorityQueue.put(actionNode)
 	return
 
 #Breadth-First Search
 #FIFO Queue
 #Expand all nodes @ a given depth before any nodes at the next level are expanded
-def bfs(nodeToExpand):
-
-	#verify that this is putting these in as a pair
-	while(solutionFound is False):
-		#no solution was found
+#First node is already in the FIFO Queue.
+def bfs():
+	#Everything short circuits. Assuming Finite set of nodes.
+	while(False): 
 		if(FIFO.Empty):
-			writeToOutput(False) #will exit
+			writeToOutput(None) #will exit
 		else:
 			nodeToExpand = FIFO.get()
-
-			#check if this nodes state is the goal state. 
-			if(nodeToExpand.state == goalBankStates):
-				#if its the goal state. Append it to a last in first out.
-				return solution(nodeToExpand)
-				#TODO need to somehow return the entire thing up the line for the successful nodes
-			else:
-				#checks if the nodes state is already in our history
-				haveExpanded = isInStateHistory(nodeToExpand.state)
-				#go in if not expanded
-				if(haveExpanded == False):	
-					stateHistory.Append(nodeToExpand.state) #add to history
-					expandedNodesCount += 1
-
+			
+			stateHistory.append(nodeToExpand.state) #add to history
+			expandedNodesCount += 1
 				
+			#go through each action
+			evaluateChild(actionOneChicken(nodeToExpand))
+			evaluateChild(actionTwoChicken(nodeToExpand))
+			evaluateChild(actionOneWolf(nodeToExpand))
+			evaluateChild(actionOneWolfOneChicken(nodeToExpand))
+			evaluateChild(actionTwoWolf(nodeToExpand))
 
 
 				
 #Depth-First Search
 #LIFO Queue
 #Expands the deepest node in the current fringe of the search tree
+#First node is already in the LIFO Queue
 def dfs():
 
 
@@ -483,14 +454,9 @@ def astar():
 #ResultLIFO made as would give us the order print out needed (if we can add to it correctly that is)
 #State gotten by input
 def main():
-	global solutionFound, priorityQueue, FIFO, LIFO, currentNodeIndex
-
+	global priorityQueue, FIFO, LIFO, currentNodeIndex
 	currentNodeIndex = 0
-	solutionFound = False
-	
-	firstNode = getInput()
 
-	
 	#state is the initial starting states of the Left bank and Right bank
 	firstNode = getInput()
 
@@ -498,23 +464,23 @@ def main():
 		FIFO = Queue()
 		FIFO.put(firstNode)
 
-		bfs(firstNode)
+		bfs()
 	elif(mode == "dfs"):
 		LIFO = LifoQueue()
 		LIFO.put(firstNode)
 
-		dfs(firstNode)
+		dfs()
 	elif(mode == "iddfs"):
 		LIFO = LifoQueue()
 		FIFO = Queue()
 		FIFO.put(firstNode)
 		LIFO.put(firstNode)
 
-		iddfs(firstNode)
+		iddfs()
 	else: #astar
 		priorityQueue = PriorityQueue()
 		priorityQueue.Put(firstNode)
 
-		astar(firstNode)
+		astar()
 
 main()
