@@ -5,7 +5,7 @@
 #Uninformed and Informed Search
 #April 20, 2018
 #Audrianna Rock
-#Tarren ....TODO
+#Tarren Engberg
 
 
 import sys
@@ -84,8 +84,8 @@ def getInput():
 
 	goalBankStates = [leftBankGoal, rightBankGoal]
 	initialBankStates = [leftBankInitial, rightBankInitial]
-	#TODO CREATE THE INITIAL NODE
-	#initialNode = Node(0, 'initial', -1)
+		initialNode = Node(currentNodeIndex, initialBankState, -1)
+	currentNodeIndex += 1
 
 	#verify we have correct modes
 	if (str(mode) == "bfs" or
@@ -93,7 +93,7 @@ def getInput():
 	    str(mode) == "iddfs" or
 	    str(mode) == "astar"):
 		
-		return initialBankStates
+		return initialNode
 
 	else:
 		print str(mode), 'is not an acceptable mode. Please use bfs, dfs, iddfs, or astar. Exiting.'
@@ -122,14 +122,8 @@ def actionOneChicken(expandingNode):
 		 
 			rightStateResult[0] = rightState[0] - 1
 			rightStateResult[2] = 0
-
-			state = [leftStateResult, rightStateResult]
-			
-			#TODO Create the new child node
-
-
-			FIFO.put(state)
-
+		else:
+			return #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],0) and
 		   ge((leftState[0] - 1), leftState[1])) and #if we remove a chicken from the left side, will the chickens remaining survive
@@ -140,12 +134,29 @@ def actionOneChicken(expandingNode):
 		
 			rightStateResult[0] = rightState[0] + 1
 			rightStateResult[2] = 1
+		else:
+			return #short circuit so we don't save something we shouldn't
 
-			state = [leftStateResult, rightStateResult]
+	state = [leftStateResult, rightStateResult]
 			
-			#TODO Create the new child node
+	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
+	expandingNode.childrenIDsList.append(newNode.nodeID)
 
-			FIFO.put(state)
+	currentNodeIndex += 1
+	
+	if(mode == "bfs"):
+		FIFO.put(newNode)
+	elif(mode == "dfs"):
+		LIFO.put(newNode)
+
+	elif(mode == "iddfs"):
+		FIFO.put(newNode)
+		LIFO.put(newNode)
+
+	else: #astar
+		priorityQueue.put(newNode)
+
+	return
 
 def actionTwoChicken(expandingNode):
 	leftState = expandingNode.state[0]
@@ -170,12 +181,8 @@ def actionTwoChicken(expandingNode):
 			 
 			rightStateResult[0] = rightState[0] - 2
 			rightStateResult[2] = 0
-
-			state = [leftStateResult, rightStateResult]
-			
-			#TODO Create the new child node
-
-			FIFO.put(state)
+		else:
+			return #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],1) and
 		   ge((leftState[0] - 2), leftState[1])) and #if we remove 2 chickens from the left side, will the remaining chickens surivie
@@ -186,13 +193,29 @@ def actionTwoChicken(expandingNode):
 			 
 			rightStateResult[0] = rightState[0] + 2
 			rightStateResult[2] = 1
+		else:
+			return #short circuit so we don't save something we shouldn't
 
-			state = [leftStateResult, rightStateResult]
+	state = [leftStateResult, rightStateResult]
 			
-			#TODO Create the new child node
+	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
+	expandingNode.childrenIDsList.append(newNode.nodeID)
 
+	currentNodeIndex += 1
+	
+	if(mode == "bfs"):
+		FIFO.put(newNode)
+	elif(mode == "dfs"):
+		LIFO.put(newNode)
 
-			FIFO.put(state)
+	elif(mode == "iddfs"):
+		FIFO.put(newNode)
+		LIFO.put(newNode)
+
+	else: #astar
+		priorityQueue.put(newNode)
+	
+	return
 
 
 def actionOneWolf(expandingNode):
@@ -217,14 +240,8 @@ def actionOneWolf(expandingNode):
 			 
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
-
-			state = [leftStateResult, rightStateResult]
-			
-
-			#TODO Create the new child node
-
-			FIFO.put(state)
-
+		else:
+			return #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[1],0) and
 		   le((rightState[1] + 1), rightState[0])): #by adding another wolf to the right bank, do we outweight the chickens?
@@ -234,13 +251,29 @@ def actionOneWolf(expandingNode):
 			 
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
+		else:
+			return #short circuit so we don't save something we shouldn't
 
-			state = [leftStateResult, rightStateResult]
+	state = [leftStateResult, rightStateResult]
 			
+	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
+	expandingNode.childrenIDsList.append(newNode.nodeID)
 
-			#TODO Create the new child node
+	currentNodeIndex += 1
+	
+	if(mode == "bfs"):
+		FIFO.put(newNode)
+	elif(mode == "dfs"):
+		LIFO.put(newNode)
 
-			FIFO.put(state)
+	elif(mode == "iddfs"):
+		FIFO.put(newNode)
+		LIFO.put(newNode)
+
+	else: #astar
+		priorityQueue.put(newNode)
+
+	return
 
 
 def actionOneWolfOneChicken(expandingNode):
@@ -268,13 +301,8 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] - 1
 			rightStateResult[1] = rightState[1] - 1
 			rightStateResult[2] = 0
-
-			state = [leftStateResult, rightStateResult]
-			
-			#TODO Create the new child node
-
-			FIFO.put(state)
-
+		else:
+			return #short circuit so we don't save something we shouldn't
 	else:
 		if(gt(leftState[0],0) and gt(leftState[1],0) and
 		   ge((rightState[0] + 1), (rightState[1] + 1))):#if there are more wolves than chickens on the left side now, then goodbye chicken added
@@ -286,13 +314,29 @@ def actionOneWolfOneChicken(expandingNode):
 			rightStateResult[0] = rightState[0] + 1
 			rightStateResult[1] = rightState[1] + 1
 			rightStateResult[2] = 1
+		else:
+			return #short circuit so we don't save something we shouldn't
 
-			state = [leftStateResult, rightStateResult]
+	state = [leftStateResult, rightStateResult]
 			
-			#TODO Create the new child node
+	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
+	expandingNode.childrenIDsList.append(newNode.nodeID)
 
-			FIFO.put(state)
+	currentNodeIndex += 1
+	
+	if(mode == "bfs"):
+		FIFO.put(newNode)
+	elif(mode == "dfs"):
+		LIFO.put(newNode)
 
+	elif(mode == "iddfs"):
+		FIFO.put(newNode)
+		LIFO.put(newNode)
+
+	else: #astar
+		priorityQueue.put(newNode)
+
+	return
 
 
 def actionTwoWolf(expandingNode):
@@ -317,12 +361,8 @@ def actionTwoWolf(expandingNode):
 			 
 			rightStateResult[1] = rightState[1] - 2
 			rightStateResult[2] = 0
-
-			state = [leftStateResult, rightStateResult]
-			
-			#TODO Create the new child node
-
-			FIFO.put(state)
+		else:
+			return #short circuit so we don't save something we shouldn't
 
 	else:
 		if(gt(leftState,1) and 
@@ -333,12 +373,30 @@ def actionTwoWolf(expandingNode):
 			 
 			rightStateResult[1] = rightState[1] + 2
 			rightStateResult[2] = 1
+		else:
+			return #short circuit so we don't save something we shouldn't
 
-			state = [leftStateResult, rightStateResult]
+	state = [leftStateResult, rightStateResult]
 			
-			#TODO Create the new child node
+	newNode = Node(currentNodeIndex, expandingNode.state, expandingNode.nodeID)
+	expandingNode.childrenIDsList.append(newNode.nodeID)
 
-			FIFO.put(state)
+	currentNodeIndex += 1
+
+	if(mode == "bfs"):
+		FIFO.put(newNode)
+	elif(mode == "dfs"):
+		LIFO.put(newNode)
+
+	elif(mode == "iddfs"):
+		FIFO.put(newNode)
+		LIFO.put(newNode)
+
+	else: #astar
+		priorityQueue.put(newNode)
+
+	return
+
 
 
 #write the result to output
@@ -395,7 +453,7 @@ def bfs(nodeToExpand):
 					stateHistory.Append(nodeToExpand.state) #add to history
 					expandedNodesCount += 1
 
-					expandBfs(nodeToExpand)
+				
 
 
 				
@@ -425,28 +483,38 @@ def astar():
 #ResultLIFO made as would give us the order print out needed (if we can add to it correctly that is)
 #State gotten by input
 def main():
-	global solutionFound, FIFO, LIFO, currentNodeIndex
+	global solutionFound, priorityQueue, FIFO, LIFO, currentNodeIndex
 
 	currentNodeIndex = 0
 	solutionFound = False
-	LIFO = LifoQueue()
-	priorityQueue = PriorityQueue()
-	FIFO = Queue()
+	
+	firstNode = getInput()
+
 	
 	#state is the initial starting states of the Left bank and Right bank
 	firstNode = getInput()
 
-	FIFO.put(firstNode)
-	LIFO.put(firstNode)
-	priorityQueue.Put(firstNode)
-
 	if(mode == "bfs"):
+		FIFO = Queue()
+		FIFO.put(firstNode)
+
 		bfs(firstNode)
 	elif(mode == "dfs"):
+		LIFO = LifoQueue()
+		LIFO.put(firstNode)
+
 		dfs(firstNode)
 	elif(mode == "iddfs"):
+		LIFO = LifoQueue()
+		FIFO = Queue()
+		FIFO.put(firstNode)
+		LIFO.put(firstNode)
+
 		iddfs(firstNode)
 	else: #astar
+		priorityQueue = PriorityQueue()
+		priorityQueue.Put(firstNode)
+
 		astar(firstNode)
 
 main()
