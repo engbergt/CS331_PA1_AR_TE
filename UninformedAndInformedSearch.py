@@ -13,6 +13,7 @@ import string
 import Queue
 import os.path
 import operator
+import math
 
 
 # Define the Node class
@@ -158,7 +159,7 @@ def getInput():
 	rightBankInitial[1] = int(rightBankInitial[1])
 	rightBankInitial[2] = int(rightBankInitial[2])
 	
-	depthLimit = ((rightBankInitial[0] + rightBankInitial[1]) * 2)
+	depthLimit = ((rightBankInitial[0] + rightBankInitial[1]) * 2 )
 
 	goalBankStates = [leftBankGoal, rightBankGoal]
 	initialBankState = [leftBankInitial, rightBankInitial]
@@ -538,6 +539,7 @@ def isInStateHistory(state):
 #Otherwise, will see if the node is our goal state. If so, it will call the solution function
 #Else it will append to our list of nodes, and add to the appropriate queue the node before returning.
 def evaluateChild(actionNode):
+	global FIFO, priorityQueue, LIFO
 	#checks if the nodes state is already in our history
 	if(actionNode == None or isInStateHistory(actionNode.state)):
 		return
@@ -554,11 +556,54 @@ def evaluateChild(actionNode):
 				FIFO.put(actionNode)
 			elif(mode == "dfs"):
 				LIFO.put(actionNode)
-			elif(mode == "iddfs"):
-				FIFO.put(actionNode)
-				LIFO.put(actionNode)
 			else: #astar
-				priorityQueue.put(actionNode)
+				return#priorityQueue.put(actionNode)
+	
+
+def doAction(actionNode):
+	#go through each action
+	oneChicken = actionOneChicken(actionNode)
+	evaluateChild(oneChicken)
+	twoChicken = actionTwoChicken(actionNode)
+	evaluateChild(twoChicken)
+	oneWolf = actionOneWolf(actionNode)
+	evaluateChild(oneWolf)
+	oneWolfOneChicken = actionOneWolfOneChicken(actionNode)
+	evaluateChild(oneWolfOneChicken)
+	twoWolf = actionTwoWolf(actionNode)
+	evaluateChild(twoWolf)
+
+#specific to Iddfs
+def doActionIddfs(actionNode, depth):
+	newDepth = 0
+	newDepth += (depth - 1)
+
+	#go through each action
+	oneChicken = actionOneChicken(actionNode)
+	if(not(oneChicken == None)):
+		evaluateChild(oneChicken)
+		recursiveDls(oneChicken, newDepth)
+
+	twoChicken = actionTwoChicken(actionNode)
+	if(not(twoChicken == None)):
+		evaluateChild(twoChicken)
+		recursiveDls(twoChicken, newDepth)
+	
+	oneWolf = actionOneWolf(actionNode)
+	if(not(oneWolf == None)):
+		evaluateChild(oneWolf)
+		recursiveDls(oneWolf, newDepth)
+	
+	oneWolfOneChicken = actionOneWolfOneChicken(actionNode)
+	if(not(oneWolfOneChicken == None)):
+		evaluateChild(oneWolfOneChicken)
+		recursiveDls(oneWolfOneChicken, newDepth)
+	
+	twoWolf = actionTwoWolf(actionNode)
+	if(not(twoWolf == None)):
+		evaluateChild(twoWolf)
+		recursiveDls(twoWolf, newDepth)
+
 	return
 
 #Breadth-First Search
@@ -577,17 +622,7 @@ def bfs():
 
 			expandedNodesCount += 1
 
-			#go through each action
-			oneChicken = actionOneChicken(nodeToExpand)
-			evaluateChild(oneChicken)
-			twoChicken = actionTwoChicken(nodeToExpand)
-			evaluateChild(twoChicken)
-			oneWolf = actionOneWolf(nodeToExpand)
-			evaluateChild(oneWolf)
-			oneWolfOneChicken = actionOneWolfOneChicken(nodeToExpand)
-			evaluateChild(oneWolfOneChicken)
-			twoWolf = actionTwoWolf(nodeToExpand)
-			evaluateChild(twoWolf)
+			doAction(nodeToExpand)
 				
 #Depth-First Search
 #LIFO Queue
@@ -605,29 +640,33 @@ def dfs():
 
 			expandedNodesCount += 1
 
-			#go through each action
-			oneChicken = actionOneChicken(nodeToExpand)
-			evaluateChild(oneChicken)
-			twoChicken = actionTwoChicken(nodeToExpand)
-			evaluateChild(twoChicken)
-			oneWolf = actionOneWolf(nodeToExpand)
-			evaluateChild(oneWolf)
-			oneWolfOneChicken = actionOneWolfOneChicken(nodeToExpand)
-			evaluateChild(oneWolfOneChicken)
-			twoWolf = actionTwoWolf(nodeToExpand)
-			evaluateChild(twoWolf)
-
+			doAction(nodeToExpand)
 
 	return
 
+def recursiveDls(node, depth):
+	global expandedNodesCount
+	if(operator.eq(depth,0)):
+		return
+	else:
+		expandedNodesCount += 1
+		doActionIddfs(node, depth)
+
+
+#makes initial call to the recursive DLS function
 def depthLimitedSearch(depth):
+	global initialNode
+	recursiveDls(initialNode, depth)
 	return
+
 #Iterative Deepening Depth First
 #Do Depth First with depth limit, iterate up depth limit until a goal is found.
 #Merge of depth and breadth
 def iddfs():
-	global LIFO, depthLimit
-	for depth in range(0, int(depthLimit)):
+	global LIFO, depthLimit, expandedNodesCount
+	expandedNodesCount = 0
+	
+	for depth in range(0, depthLimit):
 		depthLimitedSearch(depth) #should shortcircuit if we find the goal
 		reset()
 	writeToOutput(None)# if we never found the solution, there is no solution.
@@ -659,12 +698,8 @@ def main():
 
 		dfs()
 	elif(mode == "iddfs"):
-		LIFO = Queue.LifoQueue(0)
-		FIFO = Queue.Queue(0)
-		FIFO.put(firstNode)
-		LIFO.put(firstNode)
-
 		iddfs()
+
 	else: #astar
 		priorityQueue = Queue.PriorityQueue(0)
 		priorityQueue.Put(firstNode)
